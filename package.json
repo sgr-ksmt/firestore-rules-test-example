@@ -1,0 +1,23 @@
+{
+  "name": "firestore-rules-test-example",
+  "version": "1.0.0",
+  "main": "index.js",
+  "private": true,
+  "engines": {
+    "node": "10"
+  },
+  "scripts": {
+    "__test:rules": "yarn jest --detectOpenHandles rules",
+    "test:rules": "yarn firebase emulators:exec --only firestore \"yarn __test:rules\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^1.0.5",
+    "firebase-tools": "^8.11.2",
+    "jest": "^26.4.2",
+    "ts-jest": "^26.4.1",
+    "typescript": "^4.0.3"
+  },
+  "dependencies": {
+    "firebase-admin": "^9.2.0"
+  }
+}

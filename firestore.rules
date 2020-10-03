@@ -1,0 +1,78 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userID} {
+      allow create: if isUserAuthenticated(userID)
+                    && incomingData().isActive;
+    }
+    match /articles/{articleID} {
+      allow get: if isAuthenticated()
+                && existingData().publishedAt <= request.time;
+      allow create: if validateUser()
+                    && validateFields(incomingData());
+
+      function validateUser() {
+        let userID = incomingData().authorID;
+        return isUserAuthenticated(userID)
+          && getData(documentPath(['users', userID])).isActive;
+      }
+
+      function validateFields(data) {
+        let fields = [
+          'title',
+          'body',
+          'authorID',
+          'categoryName',
+          'publishedAt',
+          'createdAt',
+        ];
+
+        return data.keys().toSet().difference(fields.toSet()).size() == 0
+          && validateString(data.title, 1, 50)
+          && validateString(data.body, 1, 2000)
+          && validateString(data.categoryName, 1, 50)
+          && isRequestedTime(data.createdAt)
+          && data.publishedAt is timestamp
+      }
+    }
+
+    // custom functions
+    function documentPath(paths) {
+      return path([
+        ['databases', database, 'documents'].join('/'),
+        paths.join('/')
+      ].join('/'));
+    }
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isUserAuthenticated(userID) {
+      return request.auth.uid == userID;
+    }
+
+    function incomingData() {
+      return request.resource.data;
+    }
+
+    function existingData() {
+      return resource.data;
+    }
+
+    function getData(path) {
+      return get(path).data;
+    }
+
+
+    function isRequestedTime(time) {
+      return time == request.time;
+    }
+
+    function validateString(text, min, max) {
+      return text is string
+        && min <= text.size()
+        && text.size() <= max;
+    }
+  }
+}
